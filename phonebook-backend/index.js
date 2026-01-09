@@ -1,7 +1,10 @@
 const express = require('express');
+var morgan = require('morgan')
 
 const app = express();
 app.use(express.json());
+morgan.token('body', (req) => JSON.stringify(req.body))
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
 let persons = [
     {
@@ -27,10 +30,8 @@ let persons = [
 ]
 
 const generateId = () => {
-  const maxId = persons.length > 0
-    ? Math.max(...persons.map(n => Number(n.id)))
-    : 0
-  return String(maxId + 1)
+  const randomId = Math.floor(Math.random() * 1000000)
+  return String(randomId)
 }
 
 app.get('/api/persons', (request, response) => {
@@ -43,7 +44,7 @@ app.get('/info', (request, response) => {
 })
 
 app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
+    const id = String(request.params.id)
     const person = persons.find(person => person.id === id)
 
     if(person){
@@ -76,7 +77,7 @@ app.post('/api/persons', (request, response) => {
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id);
+    const id = String(request.params.id);
     persons = persons.filter(person => person.id !== id)
     response.status(204).end();
 })
