@@ -1,5 +1,7 @@
+require('dotenv').config()
 const express = require('express');
 var morgan = require('morgan')
+const Person = require('./models/persons')
 
 const app = express();
 app.use(express.json());
@@ -32,39 +34,41 @@ let persons = [
 ]
 
 const generateId = () => {
-  const randomId = Math.floor(Math.random() * 1000000)
-  return String(randomId)
+    const randomId = Math.floor(Math.random() * 1000000)
+    return String(randomId)
 }
 
 app.get('/api/persons', (request, response) => {
-    response.json(persons)
+    Person.find().then(person => {
+        response.json(person)
+    })
 })
 
-app.get('/info', (request, response) => {
-    const info = `<p>Phonebook has info for ${persons.length} people</p><p>${new Date()}</p>`;
+app.get('/info', async (request, response) => {
+    const count = await Person.countDocuments()
+    const info = await `<p>Phonebook has info for ${count} people</p><p>${new Date()}</p>`;
     response.send(info);
 })
 
 app.get('/api/persons/:id', (request, response) => {
-    const id = String(request.params.id)
-    const person = persons.find(person => person.id === id)
-
-    if(person){
-        response.json(person)
-    } else{
-        response.status(404).end()
-    }
+    Person.findById(request.params.id).then(person => {
+        if (person) {
+            response.json(person)
+        } else {
+            response.status(404).end()
+        }
+    })
 })
 
 app.post('/api/persons', (request, response) => {
     const body = request.body;
-    if(!body.name || !body.number){
+    if (!body.name || !body.number) {
         return response.status(400).json({
             error: 'name or number is missing'
         });
     }
     const nameExists = persons.find(person => person.name === body.name);
-    if(nameExists){
+    if (nameExists) {
         return response.status(400).json({
             error: 'name must be unique'
         });
@@ -88,5 +92,4 @@ const PORT = 3001;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
-
 
